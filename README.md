@@ -9,7 +9,9 @@ and gives you the FEN.
 Works on phones too. Recognition runs right in the browser (ONNX Runtime Web); images are never
 uploaded anywhere. The recognized position opens in an editor: drag pieces from the white and black
 trays onto the board, move pieces between squares, or drag them off the board to remove them.
-There are links to analysis on lichess and chess.com, and a PGN download (opens in En Croissant).
+Stockfish 19 (WebAssembly, in the browser) analyzes the position right away and after every edit:
+evaluation, the top 3 lines, and a best-move arrow on the board. There are also links to analysis on
+lichess and chess.com, and a PGN download (opens in En Croissant).
 
 The site's code is in [docs/](docs/): `detect.js` and `fen.js` are ports of `chessfen/detect.py` and
 `chessfen/fen.py`; the model is `docs/squarenet.onnx`. To check that the site and the Python version
@@ -97,6 +99,12 @@ Training piece sets come from [lichess](https://github.com/lichess-org/lila/tree
 (each set has its own license; they are not included in this repository). The website's editor pieces
 (`docs/pieces/`) and the icon are the cburnett set by Colin M.L. Burnett,
 licensed [GPLv2+](https://www.gnu.org/licenses/gpl-2.0.txt).
+
+The website's engine (`docs/engine/`) is [Stockfish.js](https://github.com/nmrugg/stockfish.js) 19
+lite single-threaded by Nathan Rugg / Chess.com, based on [Stockfish](https://github.com/official-stockfish/Stockfish),
+licensed GPLv3 (see [docs/engine/Copying.txt](docs/engine/Copying.txt)); unmodified npm release
+`stockfish@19.0.1`. Move notation uses [chess.js](https://github.com/jhlywa/chess.js) (BSD-2-Clause),
+loaded from jsDelivr.
 
 ## Limitations
 

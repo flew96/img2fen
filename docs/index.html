@@ -41,10 +41,6 @@
       </div>
 
       <div class="panel">
-        <figure class="original">
-          <canvas id="original"></canvas>
-          <figcaption>Your screenshot</figcaption>
-        </figure>
         <div class="row">
           <span class="label">To move</span>
           <div class="segmented" data-name="turn">
@@ -67,6 +63,20 @@
           <button id="copy" class="button">Copy</button>
         </div>
 
+        <div class="analysis">
+          <div class="analysis-head">
+            <span class="engine-name">Stockfish 19</span>
+            <span id="engine-depth" class="label"></span>
+            <label class="switch"><input type="checkbox" id="engine-on" checked> Analyze</label>
+          </div>
+          <div class="eval">
+            <span id="eval-num" class="eval-num">…</span>
+            <div class="eval-bar"><div id="eval-fill"></div></div>
+          </div>
+          <ol id="lines" class="lines"></ol>
+          <p id="engine-msg" class="engine-msg"></p>
+        </div>
+
         <div class="actions">
           <a id="lichess" class="button primary" target="_blank" rel="noopener">Analyze on lichess</a>
           <a id="chesscom" class="button" target="_blank" rel="noopener">Analyze on chess.com</a>
@@ -74,13 +84,20 @@
         </div>
 
         <ul id="notes" class="notes"></ul>
+
+        <figure class="original">
+          <canvas id="original"></canvas>
+          <figcaption>Your screenshot</figcaption>
+        </figure>
       </div>
     </section>
 
     <footer>
       <p>Everything runs in your browser — images are never uploaded anywhere.
         <span id="repo-link"></span></p>
-      <p class="credit">Piece images: cburnett set by Colin M.L. Burnett (GPLv2+), via lichess.</p>
+      <p class="credit">Piece images: cburnett set by Colin M.L. Burnett (GPLv2+), via lichess.
+        Engine: <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 19 lite
+        (<a href="engine/Copying.txt">GPLv3</a>), based on <a href="https://stockfishchess.org/">Stockfish</a>.</p>
     </footer>
   </main>
   <script type="module" src="app.js"></script>
