@@ -23,24 +23,24 @@ const state = {
 async function init() {
   try {
     state.session = await loadModel("squarenet.onnx");
-    $("model-status").textContent = "Нейросеть готова. Картинка обрабатывается у вас в браузере.";
+    $("model-status").textContent = "Neural network ready. Images are processed in your browser.";
     if (state.pending) handle(state.pending);
   } catch (e) {
-    $("model-status").textContent = "Не удалось загрузить нейросеть: " + e.message;
+    $("model-status").textContent = "Could not load the neural network: " + e.message;
   }
 }
 
 async function handle(blob) {
   if (!state.session) {
     state.pending = blob;
-    $("model-status").textContent = "Картинка получена, загружаю нейросеть…";
+    $("model-status").textContent = "Image received, loading the neural network…";
     return;
   }
   state.pending = null;
   try {
     state.image = await decodeImage(blob);
   } catch {
-    alert("Не получилось открыть эту картинку.");
+    alert("Could not open this image.");
     return;
   }
   state.res = await recognize(state.session, state.image.rgb);
@@ -102,14 +102,14 @@ function render() {
   $("chesscom").href = "https://www.chess.com/analysis?fen=" + encodeURIComponent(fen) + (flipped ? "&flip=true" : "");
 
   const notes = [];
-  if (!res.boardFound) notes.push(["warn", "Сетка доски не найдена — вся картинка считается доской."]);
-  if (state.orientation === "auto") notes.push(["", "Внизу (определено автоматически): " + (flipped ? "чёрные." : "белые.")]);
+  if (!res.boardFound) notes.push(["warn", "Board grid not found — the whole image is treated as the board."]);
+  if (state.orientation === "auto") notes.push(["", "At the bottom (detected automatically): " + (flipped ? "Black." : "White.")]);
   const doubtful = [];
   for (let r = 0; r < 8; r++)
     for (let c = 0; c < 8; c++)
       if (res.confidence[r][c] < DOUBT && !state.edited.has(r * 8 + c)) doubtful.push(squareName(r, c, flipped));
-  if (doubtful.length) notes.push(["warn", "Проверьте поля (обведены красным): " + doubtful.join(", ")]);
-  for (const p of problems(board, state.turn)) notes.push(["warn", "Позиция некорректна: " + p]);
+  if (doubtful.length) notes.push(["warn", "Please check these squares (outlined in red): " + doubtful.join(", ")]);
+  for (const p of problems(board, state.turn)) notes.push(["warn", "Illegal position: " + p]);
   $("notes").replaceChildren(...notes.map(([cls, text]) => {
     const li = document.createElement("li");
     li.className = cls; li.textContent = text;
@@ -203,11 +203,11 @@ function openPicker(r, c, x, y) {
   const options = ["K", "Q", "R", "B", "N", "P", "", "k", "q", "r", "b", "n", "p", ""];
   picker.replaceChildren(...options.map((ch, i) => {
     const b = document.createElement("button");
-    if (i === 13) { b.textContent = "пусто"; b.className = "empty"; }
+    if (i === 13) { b.textContent = "empty"; b.className = "empty"; }
     else if (ch === "") { b.style.visibility = "hidden"; }
     else b.textContent = GLYPHS[ch] + "︎";
     if (ch === current && (i === 13 || ch)) b.classList.add("on");
-    b.title = ch ? ch : "пустое поле";
+    b.title = ch ? ch : "empty square";
     b.addEventListener("click", (ev) => {
       ev.stopPropagation();
       if (state.orientation === "auto") setSegment("orientation", isFlipped() ? "black" : "white");
@@ -234,8 +234,8 @@ document.addEventListener("click", (e) => {
 
 $("copy").addEventListener("click", async () => {
   await navigator.clipboard.writeText($("fen").value);
-  $("copy").textContent = "Скопировано";
-  setTimeout(() => ($("copy").textContent = "Копировать"), 1500);
+  $("copy").textContent = "Copied";
+  setTimeout(() => ($("copy").textContent = "Copy"), 1500);
 });
 
 $("pgn").addEventListener("click", () => {
@@ -252,7 +252,7 @@ if (location.hostname.endsWith(".github.io")) {
   const user = location.hostname.split(".")[0];
   const repo = location.pathname.split("/").filter(Boolean)[0];
   if (repo) {
-    const a = Object.assign(document.createElement("a"), { href: `https://github.com/${user}/${repo}`, textContent: "Исходный код" });
+    const a = Object.assign(document.createElement("a"), { href: `https://github.com/${user}/${repo}`, textContent: "Source code" });
     $("repo-link").append(a);
   }
 }

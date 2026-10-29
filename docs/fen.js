@@ -77,21 +77,21 @@ export function problems(board, turn) {
   const count = (ch) => board.flat().filter((x) => x === ch).length;
   const side = (upper) => board.flat().filter((x) => x && (x === x.toUpperCase()) === upper).length;
   const out = [];
-  if (count("K") === 0) out.push("нет белого короля");
-  if (count("k") === 0) out.push("нет чёрного короля");
-  if (count("K") > 1 || count("k") > 1) out.push("больше одного короля одного цвета");
-  if (count("P") > 8) out.push("больше 8 белых пешек");
-  if (count("p") > 8) out.push("больше 8 чёрных пешек");
-  if ([...board[0], ...board[7]].some((x) => x === "P" || x === "p")) out.push("пешка на первой/последней горизонтали");
-  if (side(true) > 16) out.push("больше 16 белых фигур");
-  if (side(false) > 16) out.push("больше 16 чёрных фигур");
+  if (count("K") === 0) out.push("no white king");
+  if (count("k") === 0) out.push("no black king");
+  if (count("K") > 1 || count("k") > 1) out.push("more than one king of the same color");
+  if (count("P") > 8) out.push("more than 8 white pawns");
+  if (count("p") > 8) out.push("more than 8 black pawns");
+  if ([...board[0], ...board[7]].some((x) => x === "P" || x === "p")) out.push("pawn on the first or last rank");
+  if (side(true) > 16) out.push("more than 16 white pieces");
+  if (side(false) > 16) out.push("more than 16 black pieces");
   if (count("K") === 1 && count("k") === 1) {
     // the side that just moved cannot be in check
     const waiting = turn === "w" ? "k" : "K";
     for (let r = 0; r < 8; r++)
       for (let c = 0; c < 8; c++)
         if (board[r][c] === waiting && attacked(board, r, c, turn === "w"))
-          out.push("шах стороне, которая не ходит (проверьте, чей ход)");
+          out.push("the side not to move is in check (check whose turn it is)");
   }
   return out;
 }
@@ -101,6 +101,6 @@ export function toPgn(fen) {
   const pad = (n) => String(n).padStart(2, "0");
   const date = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`;
   const label = `${pad(now.getDate())}.${pad(now.getMonth() + 1)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  return `[Event "Позиция с картинки ${label}"]\n[Site "?"]\n[Date "${date}"]\n[Round "?"]\n` +
+  return `[Event "Position from image ${label}"]\n[Site "?"]\n[Date "${date}"]\n[Round "?"]\n` +
     `[White "?"]\n[Black "?"]\n[Result "*"]\n[SetUp "1"]\n[FEN "${fen}"]\n\n*\n`;
 }
