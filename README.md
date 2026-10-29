@@ -1,103 +1,104 @@
-# Картинка → FEN
+# Image → FEN
 
-Распознаёт шахматную позицию на скриншоте (lichess, chess.com, диаграммы из книг/сайтов)
-и выдаёт FEN.
+Recognizes a chess position in a screenshot (lichess, chess.com, diagrams from books and websites)
+and gives you the FEN.
 
-## Сайт
+## Website
 
-**https://flew96.github.io/img2fen/** — вставьте скриншот (Ctrl+V), перетащите картинку или выберите файл.
-Работает и на телефоне. Распознавание идёт прямо в браузере (ONNX Runtime Web), картинки никуда
-не отправляются. Распознанная позиция открывается в редакторе: фигуры из лотков белых и чёрных
-перетаскиваются на доску, фигуры на доске — переставляются, а утащенные за доску — удаляются.
-Есть ссылки на анализ в lichess и chess.com и скачивание PGN (открывается в En Croissant).
+**https://flew96.github.io/img2fen/** — paste a screenshot (Ctrl+V), drop an image, or choose a file.
+Works on phones too. Recognition runs right in the browser (ONNX Runtime Web); images are never
+uploaded anywhere. The recognized position opens in an editor: drag pieces from the white and black
+trays onto the board, move pieces between squares, or drag them off the board to remove them.
+There are links to analysis on lichess and chess.com, and a PGN download (opens in En Croissant).
 
-Код сайта — в [docs/](docs/): `detect.js` и `fen.js` — порт `chessfen/detect.py` и `chessfen/fen.py`,
-модель — `docs/squarenet.onnx`. Проверка, что сайт и Python дают одинаковый результат:
-`tools/make_web_tests.py`, затем открыть `tools/web_test.html` через локальный сервер
-(`python -m http.server` в корне проекта).
+The site's code is in [docs/](docs/): `detect.js` and `fen.js` are ports of `chessfen/detect.py` and
+`chessfen/fen.py`; the model is `docs/squarenet.onnx`. To check that the site and the Python version
+give identical results, run `tools/make_web_tests.py`, then open `tools/web_test.html` through a local
+server (`python -m http.server` in the project root).
 
-## Программа для Windows
+## Windows app
 
-Ярлык **«Картинка в FEN»** на рабочем столе и в меню «Пуск» (поиск Windows его тоже находит).
-Сделайте скриншот (Win+Shift+S) и откройте программу — картинка из буфера распознается сразу;
-дальше новые скриншоты вставляются через Ctrl+V. Пересоздать ярлыки:
-
-```bash
-.venv/Scripts/python tools/make_shortcut.py
-```
-
-### En Croissant
-
-Кнопка **En Croissant** сохраняет позицию в `Документы\chess-positions\position_<дата>.pgn`
-и открывает её в En Croissant в новой вкладке. Галочка **«сразу открывать в En Croissant»**
-делает это автоматически после каждого распознавания (если доска найдена и позиция корректна);
-настройка запоминается. Из командной строки: `img2fen.py картинка.png --en-croissant`.
-
-En Croissant не умеет передавать файл уже открытому окну, поэтому каждая позиция открывается
-в новом окне программы.
-
-Командная строка:
-
-```bash
-.venv/Scripts/python img2fen.py screenshot.png
-```
-
-Без аргументов картинка берётся из буфера обмена. Полезные опции:
-
-| опция | что делает |
-|---|---|
-| `--turn b` | ход чёрных (по картинке это определить нельзя, по умолчанию `w`) |
-| `--orientation black` | чёрные внизу картинки (по умолчанию определяется автоматически) |
-| `--debug out.png` | сохранить картинку с найденной сеткой и распознанными фигурами |
-| `--box X0 Y0 X1 Y1` | задать положение доски вручную |
-| `--fen-only`, `--json` | формат вывода |
-
-Права рокировки ставятся, если король и ладья стоят на исходных полях; взятие на проходе — `-`.
-
-## Как это работает
-
-1. **Поиск доски** ([chessfen/detect.py](chessfen/detect.py)). Границы между клетками — длинные
-   прямые перепады цвета на равном расстоянии друг от друга. Вертикальные линии сетки дают верх и низ
-   доски, горизонтальные — лево и право; затем сетка уточняется методом наименьших квадратов.
-   Доска находится и на полном скриншоте экрана с интерфейсом вокруг.
-2. **Нарезка** на 64 клетки 64×64 px.
-3. **Классификация** каждой клетки небольшой CNN ([chessfen/model.py](chessfen/model.py)) на 13 классов
-   (пусто + 12 фигур).
-4. **Ориентация** — по положению пешек и королей; **FEN** и проверка корректности — через `python-chess`.
-
-Нейросеть обучена только на синтетике ([chessfen/synth.py](chessfen/synth.py)): 39 наборов фигур lichess,
-случайные цвета и текстуры досок, подсветка последнего хода, шах, точки ходов, стрелки, координаты,
-масштабирование, размытие и JPEG-артефакты.
-
-## Переобучение
+A desktop window with the same recognition plus En Croissant integration (interface in Russian).
 
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv torch --index-url https://download.pytorch.org/whl/cu128
 uv pip install --python .venv -r requirements.txt
-.venv/Scripts/python tools/download_pieces.py    # наборы фигур lichess -> data/pieces
-.venv/Scripts/python train.py                    # ~15 мин на RTX 4090 -> model/squarenet.pt
+.venv/Scripts/python tools/make_shortcut.py      # "Картинка в FEN" shortcut on the Desktop and in Start
 ```
 
-Новый стиль фигур можно добавить, положив 12 SVG (`wK.svg` … `bP.svg`) в `data/pieces/<имя>/`.
+Take a screenshot (Win+Shift+S) and open the app — the image in the clipboard is recognized right away;
+after that, paste new screenshots with Ctrl+V. You can also start it with `.venv/Scripts/python gui.py`.
 
-Проверки: `tools/eval_detect.py` (поиск доски на синтетических скриншотах),
-`tools/eval_real.py` (настоящие картинки lichess из `tools/fetch_lichess_tests.py`).
+### En Croissant
 
-После переобучения обновите модель сайта:
+The **En Croissant** button saves the position to `Documents\chess-positions\position_<date>.pgn`
+and opens it in En Croissant in a new tab. The **"open in En Croissant right away"** checkbox does this
+automatically after every recognition (if a board was found and the position is legal); the setting
+is remembered. From the command line: `img2fen.py image.png --en-croissant`.
+
+En Croissant can't hand a file to a window that is already open, so each position opens in a new
+En Croissant window.
+
+### Command line
+
+```bash
+.venv/Scripts/python img2fen.py screenshot.png
+```
+
+Without arguments the image is taken from the clipboard. Useful options:
+
+| option | what it does |
+|---|---|
+| `--turn b` | Black to move (can't be seen in the image; default `w`) |
+| `--orientation black` | Black at the bottom of the image (detected automatically by default) |
+| `--debug out.png` | save the image with the detected grid and recognized pieces |
+| `--box X0 Y0 X1 Y1` | set the board position by hand |
+| `--fen-only`, `--json` | output format |
+
+Castling rights are set when the king and rook stand on their starting squares; en passant is `-`.
+
+## How it works
+
+1. **Board detection** ([chessfen/detect.py](chessfen/detect.py)). The boundaries between squares are
+   long, straight, equally spaced color edges. The vertical grid lines give the board's top and bottom,
+   the horizontal ones give its left and right; the grid is then refined with least squares.
+   The board is found even in a full-screen screenshot with UI around it.
+2. **Slicing** into 64 squares of 64×64 px.
+3. **Classification** of each square by a small CNN ([chessfen/model.py](chessfen/model.py)) into 13 classes
+   (empty + 12 pieces).
+4. **Orientation** from where the pawns and kings stand; **FEN** and legality checks via `python-chess`.
+
+The network is trained on synthetic data only ([chessfen/synth.py](chessfen/synth.py)): 39 lichess piece
+sets, random board colors and textures, last-move highlights, check, move dots, arrows, coordinates,
+scaling, blur, and JPEG artifacts.
+
+## Retraining
+
+```bash
+.venv/Scripts/python tools/download_pieces.py    # lichess piece sets -> data/pieces
+.venv/Scripts/python train.py                    # ~15 min on an RTX 4090 -> model/squarenet.pt
+```
+
+To add a new piece style, put 12 SVGs (`wK.svg` … `bP.svg`) into `data/pieces/<name>/`.
+
+Checks: `tools/eval_detect.py` (board detection on synthetic screenshots),
+`tools/eval_real.py` (real lichess images from `tools/fetch_lichess_tests.py`).
+
+After retraining, update the website's model:
 
 ```bash
 .venv/Scripts/python -c "import torch; from chessfen.model import load_model; torch.onnx.export(load_model('model/squarenet.pt'), torch.zeros(64, 3, 64, 64), 'docs/squarenet.onnx', input_names=['tiles'], output_names=['logits'], dynamic_axes={'tiles': {0: 'n'}, 'logits': {0: 'n'}}, opset_version=17, dynamo=False)"
 ```
 
-## Благодарности
+## Credits
 
-Наборы фигур для обучения — из [lichess](https://github.com/lichess-org/lila/tree/master/public/piece)
-(у каждого набора своя лицензия, в репозиторий они не входят). Фигуры редактора на сайте
-(`docs/pieces/`) и иконка — набор cburnett, автор Colin M.L. Burnett,
-лицензия [GPLv2+](https://www.gnu.org/licenses/gpl-2.0.txt).
+Training piece sets come from [lichess](https://github.com/lichess-org/lila/tree/master/public/piece)
+(each set has its own license; they are not included in this repository). The website's editor pieces
+(`docs/pieces/`) and the icon are the cburnett set by Colin M.L. Burnett,
+licensed [GPLv2+](https://www.gnu.org/licenses/gpl-2.0.txt).
 
-## Ограничения
+## Limitations
 
-- Рассчитано на 2D-доски с экрана. Фотографии реальной доски и 3D-фигуры не поддерживаются.
-- Чей ход, взятие на проходе и счётчики ходов с картинки не определить — задаются опциями.
+- Made for 2D on-screen boards. Photos of a real board and 3D pieces are not supported.
+- Whose turn it is, en passant, and move counters can't be read from an image — set them with options.
