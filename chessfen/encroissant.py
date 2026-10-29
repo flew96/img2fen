@@ -33,7 +33,7 @@ def write_pgn(fen, folder=POSITIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"position_{now:%Y-%m-%d_%H-%M-%S}.pgn"
     path.write_text(
-        f'[Event "Позиция с картинки {now:%d.%m %H:%M}"]\n'
+        f'[Event "Position from image {now:%d.%m %H:%M}"]\n'
         f'[Site "?"]\n[Date "{now:%Y.%m.%d}"]\n[Round "?"]\n'
         f'[White "?"]\n[Black "?"]\n[Result "*"]\n'
         f'[SetUp "1"]\n[FEN "{fen}"]\n\n*\n',

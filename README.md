@@ -18,13 +18,13 @@ server (`python -m http.server` in the project root).
 
 ## Windows app
 
-A desktop window with the same recognition plus En Croissant integration (interface in Russian).
+A desktop window with the same recognition plus En Croissant integration.
 
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv torch --index-url https://download.pytorch.org/whl/cu128
 uv pip install --python .venv -r requirements.txt
-.venv/Scripts/python tools/make_shortcut.py      # "Картинка в FEN" shortcut on the Desktop and in Start
+.venv/Scripts/python tools/make_shortcut.py      # "Image to FEN" shortcut on the Desktop and in Start
 ```
 
 Take a screenshot (Win+Shift+S) and open the app — the image in the clipboard is recognized right away;

@@ -1,8 +1,8 @@
-"""Распознать шахматную позицию на картинке и вывести FEN.
+"""Recognize a chess position in an image and print the FEN.
 
-Примеры:
+Examples:
     python img2fen.py screenshot.png
-    python img2fen.py                      # картинка из буфера обмена
+    python img2fen.py                      # image from the clipboard
     python img2fen.py board.jpg --turn b --orientation black
     python img2fen.py board.jpg --debug found.png
 """
@@ -25,7 +25,7 @@ def load_image(path):
         if isinstance(clip, list) and clip:  # files copied in Explorer
             clip = Image.open(clip[0])
         if not isinstance(clip, Image.Image):
-            sys.exit("В буфере обмена нет картинки. Укажите путь к файлу или скопируйте скриншот.")
+            sys.exit("There is no image in the clipboard. Give a file path or copy a screenshot.")
         return clip.convert("RGB")
     return Image.open(path).convert("RGB")
 
@@ -33,17 +33,17 @@ def load_image(path):
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(description="Шахматная позиция с картинки -> FEN")
-    ap.add_argument("images", nargs="*", help="файлы картинок (без аргументов — из буфера обмена)")
-    ap.add_argument("--turn", choices=["w", "b"], default="w", help="чей ход (по умолчанию белых)")
+    ap = argparse.ArgumentParser(description="Chess position from an image -> FEN")
+    ap.add_argument("images", nargs="*", help="image files (without arguments: from the clipboard)")
+    ap.add_argument("--turn", choices=["w", "b"], default="w", help="side to move (default: White)")
     ap.add_argument("--orientation", choices=["auto", "white", "black"], default="auto",
-                    help="чьи фигуры внизу картинки (по умолчанию — определить автоматически)")
+                    help="whose pieces are at the bottom of the image (default: detect automatically)")
     ap.add_argument("--box", type=int, nargs=4, metavar=("X0", "Y0", "X1", "Y1"),
-                    help="задать положение доски вручную, если автоопределение ошиблось")
-    ap.add_argument("--debug", metavar="PNG", help="сохранить картинку с найденной сеткой")
-    ap.add_argument("--en-croissant", action="store_true", help="открыть позицию в En Croissant")
-    ap.add_argument("--json", action="store_true", help="вывод в JSON")
-    ap.add_argument("--fen-only", action="store_true", help="печатать только FEN")
+                    help="set the board position by hand if detection got it wrong")
+    ap.add_argument("--debug", metavar="PNG", help="save the image with the detected grid")
+    ap.add_argument("--en-croissant", action="store_true", help="open the position in En Croissant")
+    ap.add_argument("--json", action="store_true", help="JSON output")
+    ap.add_argument("--fen-only", action="store_true", help="print only the FEN")
     ap.add_argument("--model", default=str(DEFAULT_MODEL))
     args = ap.parse_args()
 
@@ -57,9 +57,9 @@ def main():
         if args.en_croissant:
             exe = encroissant.find_exe()
             if exe is None:
-                sys.exit("En Croissant не найден (ожидался %LOCALAPPDATA%\\en-croissant\\en-croissant.exe).")
+                sys.exit("En Croissant not found (expected %LOCALAPPDATA%\\en-croissant\\en-croissant.exe).")
             encroissant.open_position(res.fen, exe)
-        name = path or "буфер обмена"
+        name = path or "clipboard"
         lichess = "https://lichess.org/analysis/" + res.fen.replace(" ", "_")
         if args.json:
             out.append({"image": name, "fen": res.fen, "box": res.box, "board_found": res.board_found,
@@ -75,15 +75,15 @@ def main():
             print(ascii_board(res.grid))
             print()
             if not res.board_found:
-                print("! Сетка доски не найдена — вся картинка считается доской.")
+                print("! Board grid not found — the whole image is treated as the board.")
             if args.orientation == "auto":
-                print("Ориентация (авто, поменять: --orientation):",
-                      "чёрные внизу" if res.flipped else "белые внизу")
+                print("Orientation (auto, change with --orientation):",
+                      "Black at the bottom" if res.flipped else "White at the bottom")
             if res.doubtful:
-                print("Сомнительные поля:", ", ".join(res.doubtful))
+                print("Doubtful squares:", ", ".join(res.doubtful))
             for p in res.problems:
-                print("! Позиция некорректна:", p)
-            print("Анализ:", lichess)
+                print("! Illegal position:", p)
+            print("Analysis:", lichess)
     if args.json:
         print(json.dumps(out if len(out) > 1 else out[0], ensure_ascii=False, indent=2))
 

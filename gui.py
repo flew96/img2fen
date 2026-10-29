@@ -1,4 +1,4 @@
-"""Окно: вставьте скриншот (Ctrl+V) или откройте файл — получите FEN."""
+"""Window: paste a screenshot (Ctrl+V) or open a file to get the FEN."""
 import json
 import os
 import pathlib
@@ -47,7 +47,7 @@ class App:
         self.result = None
         self.recognizer = None
         self.settings = load_settings()
-        root.title("Картинка → FEN")
+        root.title("Image → FEN")
         root.geometry("640x800")
         root.report_callback_exception = self.show_error
         icon = pathlib.Path(__file__).resolve().parent / "model" / "icon.ico"
@@ -56,21 +56,21 @@ class App:
 
         bar = ttk.Frame(root, padding=8)
         bar.pack(fill="x")
-        ttk.Button(bar, text="Вставить (Ctrl+V)", command=self.paste).pack(side="left")
-        ttk.Button(bar, text="Открыть файл…", command=self.open_file).pack(side="left", padx=6)
+        ttk.Button(bar, text="Paste (Ctrl+V)", command=self.paste).pack(side="left")
+        ttk.Button(bar, text="Open file…", command=self.open_file).pack(side="left", padx=6)
         self.auto_ec = tk.BooleanVar(value=self.settings.get("auto_encroissant", False))
-        ttk.Checkbutton(bar, text="сразу открывать в En Croissant", variable=self.auto_ec,
+        ttk.Checkbutton(bar, text="open in En Croissant right away", variable=self.auto_ec,
                         command=self.remember).pack(side="right")
 
         opts = ttk.Frame(root, padding=(8, 0))
         opts.pack(fill="x")
         self.turn = tk.StringVar(value="w")
         self.orientation = tk.StringVar(value="auto")
-        ttk.Label(opts, text="Ход:").pack(side="left")
-        for text, val in (("белых", "w"), ("чёрных", "b")):
+        ttk.Label(opts, text="To move:").pack(side="left")
+        for text, val in (("White", "w"), ("Black", "b")):
             ttk.Radiobutton(opts, text=text, value=val, variable=self.turn, command=self.run).pack(side="left")
-        ttk.Label(opts, text="   Внизу:").pack(side="left")
-        for text, val in (("авто", "auto"), ("белые", "white"), ("чёрные", "black")):
+        ttk.Label(opts, text="   At the bottom:").pack(side="left")
+        for text, val in (("auto", "auto"), ("White", "white"), ("Black", "black")):
             ttk.Radiobutton(opts, text=text, value=val, variable=self.orientation, command=self.run).pack(side="left")
 
         # bottom rows are packed before the preview so they always stay visible
@@ -80,11 +80,11 @@ class App:
         fen_row.pack(side="bottom", fill="x")
         self.fen = tk.StringVar()
         ttk.Entry(fen_row, textvariable=self.fen, font=("Consolas", 11)).pack(side="left", fill="x", expand=True)
-        ttk.Button(fen_row, text="Копировать", command=self.copy).pack(side="left", padx=(6, 0))
+        ttk.Button(fen_row, text="Copy", command=self.copy).pack(side="left", padx=(6, 0))
         ttk.Button(fen_row, text="lichess", command=self.lichess).pack(side="left", padx=(6, 0))
         ttk.Button(fen_row, text="En Croissant", command=self.to_encroissant).pack(side="left", padx=(6, 0))
 
-        self.canvas = tk.Label(root, text="Скопируйте скриншот доски (Win+Shift+S) и нажмите Ctrl+V", anchor="center")
+        self.canvas = tk.Label(root, text="Copy a screenshot of a board (Win+Shift+S) and press Ctrl+V", anchor="center")
         self.canvas.pack(padx=8, pady=8, fill="both", expand=True)
 
         root.bind_all("<Control-v>", lambda e: self.paste())
@@ -92,7 +92,7 @@ class App:
         root.after(50, self.start)
 
     def start(self):
-        self.status.config(text="Загрузка модели…", foreground="#555")
+        self.status.config(text="Loading the model…", foreground="#555")
         self.root.update_idletasks()
         from chessfen.recognize import Recognizer  # torch import is slow: show the window first
 
@@ -105,7 +105,7 @@ class App:
             self.run(fresh=True, quiet=True)
 
     def show_error(self, exc, value, tb):
-        messagebox.showerror("Ошибка", "".join(traceback.format_exception(exc, value, tb))[-2000:])
+        messagebox.showerror("Error", "".join(traceback.format_exception(exc, value, tb))[-2000:])
 
     def remember(self):
         self.settings["auto_encroissant"] = self.auto_ec.get()
@@ -114,13 +114,13 @@ class App:
     def paste(self):
         image = clipboard_image()
         if image is None:
-            messagebox.showinfo("Нет картинки", "В буфере обмена нет изображения.")
+            messagebox.showinfo("No image", "There is no image in the clipboard.")
             return
         self.image = image
         self.run(fresh=True)
 
     def open_file(self):
-        path = filedialog.askopenfilename(filetypes=[("Картинки", "*.png *.jpg *.jpeg *.gif *.bmp *.webp"), ("Все", "*")])
+        path = filedialog.askopenfilename(filetypes=[("Images", "*.png *.jpg *.jpeg *.gif *.bmp *.webp"), ("All files", "*")])
         if path:
             self.image = Image.open(path).convert("RGB")
             self.run(fresh=True)
@@ -146,19 +146,19 @@ class App:
 
         notes = []
         if not res.board_found:
-            notes.append("Сетка доски не найдена — вся картинка считается доской.")
+            notes.append("Board grid not found — the whole image is treated as the board.")
         if self.orientation.get() == "auto":
-            notes.append("Ориентация (авто): " + ("чёрные внизу." if res.flipped else "белые внизу."))
+            notes.append("Orientation (auto): " + ("Black at the bottom." if res.flipped else "White at the bottom."))
         if res.doubtful:
-            notes.append("Сомнительные поля (красные): " + ", ".join(res.doubtful))
-        notes += ["Некорректно: " + p for p in res.problems]
+            notes.append("Doubtful squares (red): " + ", ".join(res.doubtful))
+        notes += ["Illegal position: " + p for p in res.problems]
 
         if fresh and self.auto_ec.get():
             if res.board_found and not res.problems:
                 if self.to_encroissant():
-                    notes.append("Открыто в En Croissant.")
+                    notes.append("Opened in En Croissant.")
             else:
-                notes.append("В En Croissant не отправлено автоматически — проверьте позицию и нажмите кнопку.")
+                notes.append("Not sent to En Croissant automatically — check the position and press the button.")
         self.status.config(text="\n".join(notes), foreground="#a33" if res.problems or res.doubtful else "#555")
 
     def copy(self):
@@ -175,7 +175,7 @@ class App:
             return False
         exe = encroissant.find_exe(self.settings.get("encroissant_exe"))
         if exe is None:
-            exe = filedialog.askopenfilename(title="Где установлен En Croissant? (en-croissant.exe)",
+            exe = filedialog.askopenfilename(title="Where is En Croissant installed? (en-croissant.exe)",
                                              filetypes=[("en-croissant.exe", "*.exe")])
             if not exe:
                 return False

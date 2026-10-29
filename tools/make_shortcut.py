@@ -1,4 +1,4 @@
-"""Create "Картинка в FEN" shortcuts on the Desktop and in the Start menu.
+"""Create "Image to FEN" shortcuts on the Desktop and in the Start menu.
 
 The shortcut starts gui.py with pythonw.exe, so no console window appears.
 """
@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from chessfen.pieces import _render_svg  # noqa: E402
 
-NAME = "Картинка в FEN"
+NAME = "Image to FEN"
 
 
 def make_icon():
@@ -35,13 +35,13 @@ foreach ($dir in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFo
     $lnk.Arguments = '"{ROOT / "gui.py"}"'
     $lnk.WorkingDirectory = '{ROOT}'
     $lnk.IconLocation = '{icon},0'
-    $lnk.Description = 'Шахматная позиция с картинки -> FEN / En Croissant'
+    $lnk.Description = 'Chess position from an image -> FEN / En Croissant'
     $lnk.Save()
     Move-Item -LiteralPath $tmp -Destination $final -Force
     Write-Output $final
 }}
 """
-    # -EncodedCommand keeps the Cyrillic name intact (plain -Command goes through the ANSI codepage)
+    # -EncodedCommand keeps non-ASCII names intact (plain -Command goes through the ANSI codepage)
     encoded = base64.b64encode(script.encode("utf-16-le")).decode()
     subprocess.run(["powershell", "-NoProfile", "-EncodedCommand", encoded], check=True)
 

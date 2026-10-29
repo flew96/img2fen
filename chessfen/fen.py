@@ -59,17 +59,17 @@ def problems(fen):
     board = chess.Board(fen)
     status = board.status()
     messages = {
-        chess.STATUS_NO_WHITE_KING: "нет белого короля",
-        chess.STATUS_NO_BLACK_KING: "нет чёрного короля",
-        chess.STATUS_TOO_MANY_KINGS: "больше одного короля одного цвета",
-        chess.STATUS_TOO_MANY_WHITE_PAWNS: "больше 8 белых пешек",
-        chess.STATUS_TOO_MANY_BLACK_PAWNS: "больше 8 чёрных пешек",
-        chess.STATUS_PAWNS_ON_BACKRANK: "пешка на первой/последней горизонтали",
-        chess.STATUS_TOO_MANY_WHITE_PIECES: "больше 16 белых фигур",
-        chess.STATUS_TOO_MANY_BLACK_PIECES: "больше 16 чёрных фигур",
-        chess.STATUS_OPPOSITE_CHECK: "шах стороне, которая не ходит (проверьте, чей ход)",
-        chess.STATUS_TOO_MANY_CHECKERS: "слишком много шахующих фигур",
-        chess.STATUS_IMPOSSIBLE_CHECK: "невозможный шах",
+        chess.STATUS_NO_WHITE_KING: "no white king",
+        chess.STATUS_NO_BLACK_KING: "no black king",
+        chess.STATUS_TOO_MANY_KINGS: "more than one king of the same color",
+        chess.STATUS_TOO_MANY_WHITE_PAWNS: "more than 8 white pawns",
+        chess.STATUS_TOO_MANY_BLACK_PAWNS: "more than 8 black pawns",
+        chess.STATUS_PAWNS_ON_BACKRANK: "pawn on the first or last rank",
+        chess.STATUS_TOO_MANY_WHITE_PIECES: "more than 16 white pieces",
+        chess.STATUS_TOO_MANY_BLACK_PIECES: "more than 16 black pieces",
+        chess.STATUS_OPPOSITE_CHECK: "the side not to move is in check (check whose turn it is)",
+        chess.STATUS_TOO_MANY_CHECKERS: "too many checking pieces",
+        chess.STATUS_IMPOSSIBLE_CHECK: "impossible check",
     }
     return [text for flag, text in messages.items() if status & flag]
 
