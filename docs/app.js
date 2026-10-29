@@ -1,12 +1,8 @@
 import { decodeImage, loadModel, recognize } from "./recognize.js";
 import { guessFlipped, orient, problems, toFen, toPgn } from "./fen.js";
-import { Engine } from "./engine.js";
+import { closeAnalysis, openAnalysis } from "./analysis.js";
 
 ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
-
-// move notation (Nf3, exd5…) for engine lines; plain UCI moves if this fails to load
-let Chess = null;
-import("https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/esm/chess.js").then((m) => (Chess = m.Chess)).catch(() => {});
 
 const $ = (id) => document.getElementById(id);
 const DOUBT = 0.8;
@@ -25,11 +21,8 @@ const state = {
   edited: new Set(), // squares (r * 8 + c) changed by hand
   turn: "w",
   orientation: "auto",
-  engine: null,
-  fen: null,         // position currently shown
-  bestMove: null,    // engine's first move for state.fen, drawn as an arrow
-  analyzing: null,   // fen handed to the engine
-  analysisTimer: 0,
+  fen: null,         // position currently in the editor
+  legal: false,
 };
 
 // ---------- input
@@ -61,6 +54,7 @@ async function handle(blob) {
   state.recognized = state.res.picture.map((row) => row.slice());
   state.edited.clear();
   setSegment("orientation", "auto");
+  closeAnalysis();
   $("result").hidden = false;
   $("drop").classList.add("compact");
   render();
@@ -140,10 +134,11 @@ function render() {
     return li;
   }));
 
-  if (fen !== state.fen) state.bestMove = null;
   state.fen = fen;
+  state.legal = illegal.length === 0;
+  $("analyze").disabled = !state.legal;
+  $("analyze").title = state.legal ? "Analysis board with Stockfish" : "Fix the position first";
   drawBoard(flipped);
-  requestAnalysis(fen, illegal.length === 0);
   fillTray($("tray-top"), flipped ? WHITE : BLACK);
   fillTray($("tray-bottom"), flipped ? BLACK : WHITE);
   drawOriginal();
@@ -174,132 +169,8 @@ function drawBoard(flipped) {
       squares.push(sq);
     }
   }
-  $("board").replaceChildren(...squares, arrowSvg(flipped));
+  $("board").replaceChildren(...squares);
 }
-
-function arrowSvg(flipped) {
-  // best-move arrow over the board, in square units (viewBox 0..8)
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 8 8");
-  svg.setAttribute("class", "arrows");
-  const m = state.bestMove;
-  if (!m) return svg;
-  const center = (sq) => {
-    const file = sq.charCodeAt(0) - 97, rank = Number(sq[1]);
-    return flipped ? [7 - file + 0.5, rank - 1 + 0.5] : [file + 0.5, 8 - rank + 0.5];
-  };
-  const [x1, y1] = center(m.slice(0, 2)), [x2, y2] = center(m.slice(2, 4));
-  const len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
-  const head = 0.42, tipX = x2 - ux * 0.12, tipY = y2 - uy * 0.12;
-  const neckX = tipX - ux * head, neckY = tipY - uy * head;
-  svg.innerHTML =
-    `<line x1="${x1}" y1="${y1}" x2="${neckX}" y2="${neckY}" stroke-width="0.17" stroke-linecap="round"/>` +
-    `<polygon points="${tipX},${tipY} ${neckX - uy * 0.27},${neckY + ux * 0.27} ${neckX + uy * 0.27},${neckY - ux * 0.27}"/>`;
-  return svg;
-}
-
-function redrawArrow() {
-  const old = $("board").querySelector(".arrows");
-  if (old) old.replaceWith(arrowSvg(isFlipped()));
-}
-
-// ---------- engine analysis
-
-function analysisOn() { return $("engine-on").checked; }
-
-function requestAnalysis(fen, legal) {
-  clearTimeout(state.analysisTimer);
-  if (!analysisOn() || !legal) {
-    state.analyzing = null;
-    state.engine?.stop();
-    state.bestMove = null;
-    redrawArrow();
-    showEval(null);
-    $("lines").replaceChildren();
-    $("engine-depth").textContent = "";
-    $("engine-msg").textContent = !analysisOn() ? "Analysis is off." : "Fix the position to analyze it.";
-    return;
-  }
-  if (fen === state.analyzing) return; // same position: keep the running/finished search
-  state.analyzing = fen;
-  if (!state.engine) {
-    $("engine-msg").textContent = "Starting the engine…";
-    state.engine = new Engine("engine/stockfish-19-lite-single.js", { multiPv: 3, depth: 22, onUpdate: onEngine });
-  }
-  // dragging pieces can change the position many times a second
-  state.analysisTimer = setTimeout(() => state.engine.analyze(fen), 150);
-}
-
-function onEngine(u) {
-  if (u.error) { $("engine-msg").textContent = "Engine error: " + u.error; return; }
-  if (u.fen !== state.fen || !analysisOn()) return;
-  const white = state.fen.split(" ")[1] === "w" ? 1 : -1; // engine scores are for the side to move
-  if (u.done && u.none) {
-    let text = "No legal moves.";
-    if (Chess) {
-      try { text = new Chess(state.fen).isCheckmate() ? "Checkmate." : "Stalemate."; } catch {}
-    }
-    showEval(null);
-    $("lines").replaceChildren();
-    $("engine-msg").textContent = text;
-    return;
-  }
-  const lines = u.lines;
-  if (!lines.length) return;
-  $("engine-msg").textContent = "";
-  $("engine-depth").textContent = "depth " + lines[0].depth + (u.done ? "" : "…");
-  showEval(lines[0], white);
-  $("lines").replaceChildren(...lines.map((l) => {
-    const li = document.createElement("li");
-    const ev = Object.assign(document.createElement("span"), { className: "line-eval", textContent: formatScore(l, white) });
-    const moves = Object.assign(document.createElement("span"), { className: "line-moves", textContent: pvText(state.fen, l.pv) });
-    li.append(ev, moves);
-    return li;
-  }));
-  if (state.bestMove !== lines[0].pv[0]) {
-    state.bestMove = lines[0].pv[0];
-    redrawArrow();
-  }
-}
-
-function formatScore(l, white) {
-  if (l.mate !== null) return "#" + l.mate * white;
-  const v = (l.cp * white) / 100;
-  return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2);
-}
-
-function showEval(l, white) {
-  if (!l) { $("eval-num").textContent = "–"; $("eval-fill").style.width = "50%"; return; }
-  $("eval-num").textContent = formatScore(l, white);
-  // White's share of the bar, like lichess's win-chance curve
-  const share = l.mate !== null ? (l.mate * white > 0 ? 100 : 0)
-    : 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * l.cp * white)) - 1);
-  $("eval-fill").style.width = share.toFixed(1) + "%";
-}
-
-function pvText(fen, pv, maxPlies = 10) {
-  const moves = pv.slice(0, maxPlies);
-  if (!Chess) return moves.join(" ");
-  try {
-    const game = new Chess(fen);
-    let n = 1, out = game.turn() === "b" ? ["1…"] : [];
-    for (const uci of moves) {
-      if (game.turn() === "w") out.push(n + ".");
-      const mv = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
-      out.push(mv.san);
-      if (game.turn() === "w") n++;
-    }
-    return out.join(" ").replace(/(\d+\.) /g, "$1 ").replace("1… ", "1… ");
-  } catch {
-    return moves.join(" ");
-  }
-}
-
-$("engine-on").checked = (() => { try { return localStorage.getItem("engine-on") !== "0"; } catch { return true; } })();
-$("engine-on").addEventListener("change", () => {
-  try { localStorage.setItem("engine-on", $("engine-on").checked ? "1" : "0"); } catch {}
-  render();
-});
 
 function fillTray(tray, pieces) {
   tray.replaceChildren(...pieces.map((ch) => {
@@ -367,7 +238,7 @@ function moveDrag(e) {
   drag.ghost.style.left = e.clientX + "px";
   drag.ghost.style.top = e.clientY + "px";
   const target = squareAt(e.clientX, e.clientY);
-  document.querySelectorAll(".sq.target").forEach((s) => s.classList.remove("target"));
+  document.querySelectorAll("#board .sq.target").forEach((s) => s.classList.remove("target"));
   if (target) $("board").children[target[0] * 8 + target[1]].classList.add("target");
 }
 
@@ -408,6 +279,14 @@ $("clear").addEventListener("click", () => {
 });
 
 // ---------- actions
+
+$("analyze").addEventListener("click", () => {
+  if (!state.legal) return;
+  if (openAnalysis(state.fen, isFlipped(), () => {
+    $("result").hidden = false;
+    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  })) $("result").hidden = true;
+});
 
 $("copy").addEventListener("click", async () => {
   await navigator.clipboard.writeText($("fen").value);

@@ -63,22 +63,9 @@
           <button id="copy" class="button">Copy</button>
         </div>
 
-        <div class="analysis">
-          <div class="analysis-head">
-            <span class="engine-name">Stockfish 19</span>
-            <span id="engine-depth" class="label"></span>
-            <label class="switch"><input type="checkbox" id="engine-on" checked> Analyze</label>
-          </div>
-          <div class="eval">
-            <span id="eval-num" class="eval-num">…</span>
-            <div class="eval-bar"><div id="eval-fill"></div></div>
-          </div>
-          <ol id="lines" class="lines"></ol>
-          <p id="engine-msg" class="engine-msg"></p>
-        </div>
-
         <div class="actions">
-          <a id="lichess" class="button primary" target="_blank" rel="noopener">Analyze on lichess</a>
+          <button id="analyze" class="button primary">Analyze here</button>
+          <a id="lichess" class="button" target="_blank" rel="noopener">Analyze on lichess</a>
           <a id="chesscom" class="button" target="_blank" rel="noopener">Analyze on chess.com</a>
           <button id="pgn" class="button" title="Opens in En Croissant, ChessBase and other chess programs">Download PGN</button>
         </div>
@@ -92,12 +79,55 @@
       </div>
     </section>
 
+    <section id="analysis-view" class="analysis-view" hidden>
+      <div class="av-left">
+        <div class="av-board-row">
+          <div id="av-evalbar" class="evalbar"><div id="av-evalbar-fill"></div></div>
+          <div id="av-board" class="board"></div>
+        </div>
+        <div class="av-nav">
+          <button id="av-first" class="button" title="First position (↑)">⏮</button>
+          <button id="av-prev" class="button" title="Previous move (←)">◀</button>
+          <button id="av-next" class="button" title="Next move (→)">▶</button>
+          <button id="av-last" class="button" title="Last move (↓)">⏭</button>
+          <button id="av-flip" class="button" title="Flip board (F)">⇅</button>
+        </div>
+      </div>
+
+      <div class="panel av-panel">
+        <div class="analysis-head">
+          <span class="engine-name">Stockfish 19</span>
+          <span id="av-depth" class="label"></span>
+          <label class="switch"><input type="checkbox" id="av-engine-on" checked> On</label>
+        </div>
+        <div class="eval"><span id="av-eval" class="eval-num">–</span></div>
+        <ol id="av-lines" class="lines"></ol>
+        <p id="av-msg" class="engine-msg"></p>
+
+        <span class="label">Moves</span>
+        <div id="av-moves" class="moves"></div>
+
+        <label class="label" for="av-fen">FEN</label>
+        <div class="fen-row">
+          <input id="av-fen" spellcheck="false" readonly>
+          <button id="av-copy" class="button">Copy</button>
+        </div>
+
+        <div class="actions">
+          <button id="av-back" class="button">← Back to editor</button>
+          <button id="av-lichess" class="button">Open on lichess</button>
+          <button id="av-pgn" class="button" title="The position and the moves you played">Download PGN</button>
+        </div>
+      </div>
+    </section>
+
     <footer>
       <p>Everything runs in your browser — images are never uploaded anywhere.
         <span id="repo-link"></span></p>
       <p class="credit">Piece images: cburnett set by Colin M.L. Burnett (GPLv2+), via lichess.
         Engine: <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 19 lite
-        (<a href="engine/Copying.txt">GPLv3</a>), based on <a href="https://stockfishchess.org/">Stockfish</a>.</p>
+        (<a href="engine/Copying.txt">GPLv3</a>), based on <a href="https://stockfishchess.org/">Stockfish</a>.
+        Rules: <a href="https://github.com/jhlywa/chess.js">chess.js</a> (BSD-2-Clause).</p>
     </footer>
   </main>
   <script type="module" src="app.js"></script>

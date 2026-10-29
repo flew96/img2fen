@@ -9,9 +9,11 @@ and gives you the FEN.
 Works on phones too. Recognition runs right in the browser (ONNX Runtime Web); images are never
 uploaded anywhere. The recognized position opens in an editor: drag pieces from the white and black
 trays onto the board, move pieces between squares, or drag them off the board to remove them.
-Stockfish 19 (WebAssembly, in the browser) analyzes the position right away and after every edit:
-evaluation, the top 3 lines, and a best-move arrow on the board. There are also links to analysis on
-lichess and chess.com, and a PGN download (opens in En Croissant).
+From there: **Analyze here** opens a lichess-style analysis board — play moves by dragging or
+clicking, step through them (buttons or arrow keys), flip the board, and Stockfish 19 (WebAssembly,
+in the browser) shows the evaluation bar, the top 3 lines (click a move to play the line up to it),
+and a best-move arrow. Or open the position on lichess or chess.com, or download a PGN
+(opens in En Croissant).
 
 The site's code is in [docs/](docs/): `detect.js` and `fen.js` are ports of `chessfen/detect.py` and
 `chessfen/fen.py`; the model is `docs/squarenet.onnx`. To check that the site and the Python version
@@ -103,8 +105,8 @@ licensed [GPLv2+](https://www.gnu.org/licenses/gpl-2.0.txt).
 The website's engine (`docs/engine/`) is [Stockfish.js](https://github.com/nmrugg/stockfish.js) 19
 lite single-threaded by Nathan Rugg / Chess.com, based on [Stockfish](https://github.com/official-stockfish/Stockfish),
 licensed GPLv3 (see [docs/engine/Copying.txt](docs/engine/Copying.txt)); unmodified npm release
-`stockfish@19.0.1`. Move notation uses [chess.js](https://github.com/jhlywa/chess.js) (BSD-2-Clause),
-loaded from jsDelivr.
+`stockfish@19.0.1`. Chess rules and move notation: [chess.js](https://github.com/jhlywa/chess.js) 1.4.0
+(BSD-2-Clause), in `docs/vendor/chess.js` with its license header.
 
 ## Limitations
 
