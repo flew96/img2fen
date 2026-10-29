@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>web vs python</title>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<pre id="log">running…</pre>
+<script type="module">
+  // Compares the browser pipeline with data/webtest/expected.json (made by make_web_tests.py).
+  import { findBoard } from "../docs/detect.js";
+  import { recognize, loadModel, decodeImage } from "../docs/recognize.js";
+  import { guessFlipped, orient, toFen } from "../docs/fen.js";
+
+  ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
+  const log = document.getElementById("log");
+  const lines = [];
+  const session = await loadModel("../docs/squarenet.onnx");
+  const expected = await (await fetch("../data/webtest/expected.json")).json();
+  let fenOk = 0, boxOk = 0, n = 0, ms = 0;
+  for (const [path, want] of Object.entries(expected)) {
+    const { rgb } = await decodeImage(await (await fetch("../" + path)).blob());
+    const t0 = performance.now();
+    const res = await recognize(session, rgb);
+    ms += performance.now() - t0;
+    const flipped = guessFlipped(res.picture);
+    const fen = toFen(orient(res.picture, flipped), "w");
+    const boxDiff = Math.max(...res.box.map((v, i) => Math.abs(v - want.box[i])));
+    n++; fenOk += fen === want.fen; boxOk += boxDiff <= 1;
+    lines.push(`${fen === want.fen ? "ok " : "ERR"} box±${boxDiff.toFixed(1)} ${path}` +
+      (fen === want.fen ? "" : `\n    web ${fen}\n    py  ${want.fen}`));
+  }
+  lines.push(`\nFEN same as python: ${fenOk}/${n}, box within 1px: ${boxOk}/${n}, ${(ms / n).toFixed(0)} ms/image`);
+  log.textContent = lines.join("\n");
+  window.__done = log.textContent;
+</script>

@@ -1,0 +1,8 @@
+torch>=2.2
+numpy
+pillow>=10.1
+opencv-python-headless
+chess
+# только для обучения (рендер SVG-фигур) и экспорта модели для сайта:
+resvg-py
+onnx
