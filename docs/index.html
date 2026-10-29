@@ -29,13 +29,22 @@
     </section>
 
     <section id="result" class="result" hidden>
-      <div class="board-wrap">
-        <canvas id="board"></canvas>
-        <div id="picker" class="picker" hidden></div>
-        <p class="hint">Click a square to correct its piece.</p>
+      <div class="editor">
+        <div id="tray-top" class="tray"></div>
+        <div id="board" class="board"></div>
+        <div id="tray-bottom" class="tray"></div>
+        <p class="hint">Drag pieces from the trays onto the board. Drag a piece off the board to remove it.</p>
+        <div class="editor-actions">
+          <button id="reset" class="button">Reset to recognized</button>
+          <button id="clear" class="button">Clear board</button>
+        </div>
       </div>
 
       <div class="panel">
+        <figure class="original">
+          <canvas id="original"></canvas>
+          <figcaption>Your screenshot</figcaption>
+        </figure>
         <div class="row">
           <span class="label">To move</span>
           <div class="segmented" data-name="turn">
@@ -71,6 +80,7 @@
     <footer>
       <p>Everything runs in your browser — images are never uploaded anywhere.
         <span id="repo-link"></span></p>
+      <p class="credit">Piece images: cburnett set by Colin M.L. Burnett (GPLv2+), via lichess.</p>
     </footer>
   </main>
   <script type="module" src="app.js"></script>
